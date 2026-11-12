@@ -1,5 +1,5 @@
 /**
- * Search Index Protocol (SIP-01) v1.1 — reference implementation.
+ * Search Index Protocol (SIP-01) v1.3 — reference implementation.
  * Canonical spec: https://github.com/NostrDanish/SIP-01 (local copy: docs/SIP-01.md)
  *
  * One addressable event (kind 39697) per indexed web document:
@@ -56,10 +56,11 @@ const LANGUAGE_RE = /^[a-z]{2}$/;
 const COUNTRY_RE = /^[A-Z]{2}$/;
 
 /** Registered keyword-shaped extension tags (spec §9.2). */
-const KEYWORD_EXTENSIONS = ['type', 'platform', 'category', 'network'] as const;
+const KEYWORD_EXTENSIONS = ['type', 'platform', 'category', 'network', 'role'] as const;
 
 /** All registered extension tags this module knows how to build/parse. */
-const EXTENSION_TAGS = [...KEYWORD_EXTENSIONS, 'country', 'mime'] as const;
+const EXTENSION_TAGS = [...KEYWORD_EXTENSIONS, 'proto', 'country', 'mime'] as const;
+const CAPABILITY_ADDRESS_RE = /^39698:[0-9a-f]{64}:[a-z0-9][a-z0-9-]{0,63}$/;
 
 /** Tracking parameters stripped during normalization (spec §7 step 5). */
 const TRACKING_PARAMS = new Set([
@@ -151,6 +152,12 @@ export interface IndexObservationInput {
   country?: string;
   /** Document media type, e.g. application/pdf. */
   mime?: string;
+  /** SIP-01 v1.3 service role, e.g. tool, agent, model, api. */
+  role?: string;
+  /** SIP-01 v1.3 transport(s), e.g. mcp, http, contextvm, nostr, a2a. */
+  proto?: string | string[];
+  /** Optional NIP-01 pointer to a companion kind-39698 capability event. */
+  capabilityAddress?: string;
 }
 
 export interface UnsignedIndexEvent {
@@ -200,6 +207,9 @@ export async function buildIndexEvent(
     ['v', WEB_INDEX_SCHEMA_VERSION],
     ...(input.published ? [['published', String(Math.floor(input.published))] as string[]] : []),
     ...(input.source ? [['source', input.source.trim().slice(0, MAX_SOURCE_LEN)] as string[]] : []),
+    ...(input.capabilityAddress && CAPABILITY_ADDRESS_RE.test(input.capabilityAddress)
+      ? [['a', input.capabilityAddress]]
+      : []),
     ...buildExtensionTags(input),
     ['alt', `Web index observation: ${title}`],
   ];
@@ -220,6 +230,11 @@ function buildExtensionTags(input: IndexObservationInput): string[][] {
     if (value && EXTENSION_VALUE_RE.test(value)) {
       tags.push([name, value.toLowerCase()]);
     }
+  }
+
+  const protocols = Array.isArray(input.proto) ? input.proto : input.proto ? [input.proto] : [];
+  for (const value of protocols) {
+    if (value && EXTENSION_VALUE_RE.test(value)) tags.push(['proto', value.toLowerCase()]);
   }
 
   if (input.country) {
@@ -251,6 +266,10 @@ export interface IndexObservation {
   source?: string;
   /** Registered extension tags present on the event (spec §9.2). */
   extensions: Record<string, string>;
+  /** All values for repeatable extension tags such as v1.3 proto. */
+  extensionValues?: Record<string, string[]>;
+  /** Optional kind-39698 companion capability coordinate. */
+  capabilityAddress?: string;
   /** Event created_at — the observation time. */
   observedAt: number;
   /** Indexer pubkey (event author). */
@@ -310,10 +329,18 @@ export function parseIndexEvent(event: NostrEvent): IndexObservation | null {
   const published = publishedTag ? parseInt(publishedTag, 10) : NaN;
 
   const extensions: Record<string, string> = {};
+  const extensionValues: Record<string, string[]> = {};
   for (const name of EXTENSION_TAGS) {
-    const value = getTag(event, name);
-    if (value !== undefined) extensions[name] = value;
+    const values = event.tags.filter(([tagName]) => tagName === name).map(([, value]) => value);
+    if (values.length > 0) {
+      extensions[name] = values[0];
+      extensionValues[name] = values;
+    }
   }
+  const capabilityAddress = event.tags
+    .filter(([name]) => name === 'a')
+    .map(([, value]) => value)
+    .find((value) => CAPABILITY_ADDRESS_RE.test(value));
 
   return {
     d,
@@ -327,6 +354,8 @@ export function parseIndexEvent(event: NostrEvent): IndexObservation | null {
     published: Number.isFinite(published) ? published : undefined,
     source: getTag(event, 'source'),
     extensions,
+    extensionValues,
+    capabilityAddress,
     observedAt: event.created_at,
     indexer: event.pubkey,
     event,
