@@ -306,19 +306,17 @@ export function parseIndexEvent(event: NostrEvent): IndexObservation | null {
   const normalized = normalizeIndexUrl(url);
   if (!normalized) return null;
 
-  let title = '';
-  let description = '';
-  let image: string | undefined;
+  let parsed: Record<string, unknown>;
   try {
-    const parsed = JSON.parse(event.content) as Record<string, unknown>;
-    title = typeof parsed.title === 'string' ? parsed.title.trim().slice(0, MAX_TITLE_LEN) : '';
-    description = typeof parsed.description === 'string' ? parsed.description.trim().slice(0, MAX_DESCRIPTION_LEN) : '';
-    if (typeof parsed.image === 'string' && /^https:\/\//i.test(parsed.image)) {
-      image = parsed.image.slice(0, MAX_IMAGE_LEN);
-    }
+    parsed = JSON.parse(event.content) as Record<string, unknown>;
   } catch {
     return null;
   }
+  const title = typeof parsed.title === 'string' ? parsed.title.trim().slice(0, MAX_TITLE_LEN) : '';
+  const description = typeof parsed.description === 'string' ? parsed.description.trim().slice(0, MAX_DESCRIPTION_LEN) : '';
+  const image = typeof parsed.image === 'string' && /^https:\/\//i.test(parsed.image)
+    ? parsed.image.slice(0, MAX_IMAGE_LEN)
+    : undefined;
   if (!title) return null;
 
   const topics = event.tags
@@ -420,7 +418,7 @@ export function observationFromNostrResult(result: SearchResult): IndexObservati
   const url = result.webUrl;
   if (!url || !/^https?:\/\//i.test(url)) return null;
 
-  let host = '';
+  let host: string;
   try { host = new URL(url).hostname; } catch { return null; }
 
   const isFile = result.kind === 'File';
