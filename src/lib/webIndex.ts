@@ -306,12 +306,16 @@ export function parseIndexEvent(event: NostrEvent): IndexObservation | null {
   const normalized = normalizeIndexUrl(url);
   if (!normalized) return null;
 
-  let parsed: Record<string, unknown>;
+  let parsedValue: unknown;
   try {
-    parsed = JSON.parse(event.content) as Record<string, unknown>;
+    parsedValue = JSON.parse(event.content);
   } catch {
     return null;
   }
+  if (!parsedValue || typeof parsedValue !== 'object' || Array.isArray(parsedValue)) {
+    return null;
+  }
+  const parsed = parsedValue as Record<string, unknown>;
   const title = typeof parsed.title === 'string' ? parsed.title.trim().slice(0, MAX_TITLE_LEN) : '';
   const description = typeof parsed.description === 'string' ? parsed.description.trim().slice(0, MAX_DESCRIPTION_LEN) : '';
   const image = typeof parsed.image === 'string' && /^https:\/\//i.test(parsed.image)
