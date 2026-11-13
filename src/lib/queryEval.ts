@@ -38,6 +38,14 @@ function hostOf(url: string): string {
   }
 }
 
+function exactHostOf(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
 /** Parse a YYYY[-MM[-DD]] boundary to unix seconds. Null when malformed. */
 function dateBoundary(value: string): number | null {
   const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(value.trim());
@@ -63,7 +71,7 @@ function evalFilter(node: Extract<QueryNode, { type: 'filter' }>, doc: QueryDoc)
       return host === wanted || host.endsWith(`.${wanted}`);
     }
     case 'domain':
-      return hostOf(doc.url) === value.replace(/^www\./, '');
+      return exactHostOf(doc.url) === value.toLowerCase();
     case 'title':
       return doc.title.toLowerCase().includes(value);
     case 'lang':
