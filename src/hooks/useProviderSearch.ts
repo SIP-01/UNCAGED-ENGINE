@@ -209,14 +209,15 @@ export function useProviderSearch({
     return c as Record<SearchSource | 'all', number>;
   }, [allResults]);
 
-  // Invalidate stale queries when source changes.
+  // Invalidate stale queries when source changes, outside render.
   const prevSourceRef = useRef(source);
-  if (prevSourceRef.current !== source) {
+  useEffect(() => {
+    if (prevSourceRef.current === source) return;
     prevSourceRef.current = source;
     if (query.trim()) {
-      queryClient.invalidateQueries({ queryKey: ['provider-search', query, source] });
+      void queryClient.invalidateQueries({ queryKey: ['provider-search', query] });
     }
-  }
+  }, [source, query, queryClient]);
 
   return {
     results: allResults,
