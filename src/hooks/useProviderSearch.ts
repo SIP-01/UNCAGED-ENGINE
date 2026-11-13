@@ -164,11 +164,11 @@ export function useProviderSearch({
 
   // Apply team-signed moderation filtering to the merged results.
   // (Additive: until the moderation list loads, nothing is filtered.)
-  const baseResults = data?.results ?? [];
   const allResults = useMemo(() => {
+    const baseResults = data?.results ?? [];
     if (!moderationSet) return baseResults;
     return baseResults.filter((r) => !isHiddenResult(r, moderationSet));
-  }, [baseResults, moderationSet]);
+  }, [data?.results, moderationSet]);
   const suggestions = data?.suggestions ?? [];
 
   // Reset provider states when query clears.
