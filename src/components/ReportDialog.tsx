@@ -3,7 +3,7 @@
  * kind 1984 abuse report. Signed with the user's Nostr key (reports are
  * attributable by design); logged-out users get a login prompt.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Flag, Loader2, ShieldCheck } from 'lucide-react';
 
 import {
@@ -36,12 +36,17 @@ export function ReportDialog({ open, onOpenChange, target, targetTitle }: Report
   const [details, setDetails] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
+  // The parent may control `open` directly instead of using the Dialog
+  // callback. Reset on the prop transition so every opening starts clean.
+  useEffect(() => {
+    if (open) {
       setType('illegal');
       setDetails('');
       setError(null);
     }
+  }, [open]);
+
+  const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
   };
 
