@@ -298,6 +298,12 @@ describe('parseIndexEvent', () => {
     expect(obs!.observedAt).toBe(1754650000);
   });
 
+  it('rejects JSON null without throwing', async () => {
+    const event = await makeEvent({ content: 'null' });
+    expect(() => parseIndexEvent(event)).not.toThrow();
+    expect(parseIndexEvent(event)).toBeNull();
+  });
+
   it('rejects wrong kind / version / malformed content', async () => {
     const wrongKind = await makeEvent();
     expect(parseIndexEvent({ ...wrongKind, kind: 30078 })).toBeNull();
