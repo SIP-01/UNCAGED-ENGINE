@@ -1325,21 +1325,15 @@ function ReferralsTab() {
   const { toast } = useToast();
 
   const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [windowDays, setWindowDays] = useState('');
+  const [windowDays, setWindowDays] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  // One-time sync when the published config lands from the relays.
-  useEffect(() => {
-    if (enabled === null && !isLoading) {
-      setEnabled(config.enabled);
-      setWindowDays(String(config.attributionWindowDays));
-    }
-  }, [enabled, isLoading, config]);
-
-  const loaded = enabled !== null;
-  const windowNum = Math.floor(Number(windowDays));
+  const loaded = !isLoading;
+  const currentEnabled = enabled ?? config.enabled;
+  const currentWindowDays = windowDays ?? String(config.attributionWindowDays);
+  const windowNum = Math.floor(Number(currentWindowDays));
   const windowValid = Number.isFinite(windowNum) && windowNum > 0 && windowNum <= 3650;
-  const dirty = loaded && (enabled !== config.enabled || (windowValid && windowNum !== config.attributionWindowDays));
+  const dirty = loaded && (currentEnabled !== config.enabled || (windowValid && windowNum !== config.attributionWindowDays));
 
   const handlePublish = async () => {
     if (!loaded || !windowValid) return;
