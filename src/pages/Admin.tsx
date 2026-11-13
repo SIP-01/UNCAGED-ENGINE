@@ -21,7 +21,7 @@
  *
  * Ported from 0xPresearchstr's Team Console.
  */
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useSeoMeta } from '@unhead/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -1022,13 +1022,8 @@ function AffiliatesTab() {
   const [testUrl, setTestUrl] = useState('');
   const [pending, setPending] = useState(false);
 
-  // One-time sync when the published rules land from the relays.
-  useEffect(() => {
-    if (draft === null && !isLoading) setDraft(rules);
-  }, [draft, isLoading, rules]);
-
-  const loaded = draft !== null;
-  const current = draft ?? [];
+  const loaded = !isLoading;
+  const current = draft ?? rules;
   const dirty = loaded && JSON.stringify(current) !== JSON.stringify(rules);
 
   /** Paste a full affiliate URL → auto-fill host + every query param. */
@@ -1303,7 +1298,7 @@ function AffiliatesTab() {
               Publish rules
             </Button>
             {dirty && (
-              <Button variant="ghost" size="sm" onClick={() => setDraft(rules)}>
+              <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
                 Discard changes
               </Button>
             )}
@@ -1347,10 +1342,10 @@ function ReferralsTab() {
   const dirty = loaded && (enabled !== config.enabled || (windowValid && windowNum !== config.attributionWindowDays));
 
   const handlePublish = async () => {
-    if (enabled === null || !windowValid) return;
+    if (!loaded || !windowValid) return;
     setPending(true);
     try {
-      const next: ReferralConfig = { enabled, attributionWindowDays: windowNum };
+      const next: ReferralConfig = { enabled: currentEnabled, attributionWindowDays: windowNum };
       await updateConfig(next);
       toast({ title: 'Referral settings published', description: 'Live for all users within a minute.' });
     } catch (err) {
@@ -1395,7 +1390,7 @@ function ReferralsTab() {
                 </p>
               </div>
               <Switch
-                checked={enabled}
+                checked={currentEnabled}
                 onCheckedChange={setEnabled}
                 aria-label="Invite program enabled"
               />
@@ -1412,7 +1407,7 @@ function ReferralsTab() {
                 type="number"
                 min={1}
                 max={3650}
-                value={windowDays}
+                value={currentWindowDays}
                 onChange={(e) => setWindowDays(e.target.value)}
                 className="w-24 font-mono text-sm"
                 aria-label="Attribution window in days"
@@ -1429,8 +1424,8 @@ function ReferralsTab() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setEnabled(config.enabled);
-                    setWindowDays(String(config.attributionWindowDays));
+                    setEnabled(null);
+                    setWindowDays(null);
                   }}
                 >
                   Discard changes
