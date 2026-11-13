@@ -14,7 +14,7 @@
 import { finalizeEvent } from 'nostr-tools/pure';
 import type { NostrEvent } from '@nostrify/nostrify';
 
-import { getIndexerIdentity, getIndexerSecretKey } from '@/lib/indexerIdentity';
+import { getIndexerSecretKey } from '@/lib/indexerIdentity';
 import { buildIndexEvent, normalizeIndexUrl, type IndexObservationInput } from '@/lib/webIndex';
 import { getIndexPublishRelays } from '@/lib/appRelays';
 import { getSearchRelay } from '@/lib/searchRelays';
@@ -71,7 +71,6 @@ export async function publishIndexObservation(
       created_at: Math.floor(Date.now() / 1000),
       tags: template.tags,
       content: template.content,
-      pubkey: getIndexerIdentity().pubkeyHex,
     },
     getIndexerSecretKey(),
   );

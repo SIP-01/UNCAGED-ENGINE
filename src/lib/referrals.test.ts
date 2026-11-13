@@ -92,14 +92,14 @@ describe('parseReferralConfig', () => {
       kind: 30078,
       content: JSON.stringify({ version: 1, enabled: false, attributionWindowDays: 30 }),
       tags: [],
-    } as Parameters<typeof parseReferralConfig>[0];
+    } as unknown as Parameters<typeof parseReferralConfig>[0];
     expect(parseReferralConfig(event)).toEqual({ enabled: false, attributionWindowDays: 30 });
   });
 
   it('falls back to defaults on junk', () => {
-    const bad = { kind: 30078, content: 'not json', tags: [] } as Parameters<typeof parseReferralConfig>[0];
+    const bad = { kind: 30078, content: 'not json', tags: [] } as unknown as Parameters<typeof parseReferralConfig>[0];
     expect(parseReferralConfig(bad)).toEqual(DEFAULT_REFERRAL_CONFIG);
-    const wrongKind = { kind: 1, content: '{}', tags: [] } as Parameters<typeof parseReferralConfig>[0];
+    const wrongKind = { kind: 1, content: '{}', tags: [] } as unknown as Parameters<typeof parseReferralConfig>[0];
     expect(parseReferralConfig(wrongKind)).toEqual(DEFAULT_REFERRAL_CONFIG);
   });
 });

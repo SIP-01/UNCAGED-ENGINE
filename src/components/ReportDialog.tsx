@@ -36,6 +36,8 @@ export function ReportDialog({ open, onOpenChange, target, targetTitle }: Report
   const [details, setDetails] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // The parent may control `open` directly instead of using the Dialog
+  // callback. Reset on the prop transition so every opening starts clean.
   useEffect(() => {
     if (open) {
       setType('illegal');
@@ -43,6 +45,10 @@ export function ReportDialog({ open, onOpenChange, target, targetTitle }: Report
       setError(null);
     }
   }, [open]);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    onOpenChange(nextOpen);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +73,7 @@ export function ReportDialog({ open, onOpenChange, target, targetTitle }: Report
   };
 
   return (
-    <Dialog open={open} onOpenChange={open => onOpenChange(open)}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

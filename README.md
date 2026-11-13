@@ -249,15 +249,17 @@ session, so you can watch the index grow as you search.
   produce events with the same `d` tag — search nodes group by `d` and count
   distinct authors ("N independent indexers saw this page").
 
-**Spec conformance (v1.2):** `src/lib/webIndex.ts` is the reference
-implementation — byte-compatible URL normalization (spec §7) and content
-hashing (§8), proven by the §13/§19 test vectors in `webIndex.test.ts`. The
-registered extension tags (§9.2 — `type`, `platform`, `category`, `network`,
-`country`, `mime`) are supported on build and parse; the Web Index provider
-uses NIP-50 acceleration with web operators (`site:`, `lang:`, …) on
-SIP-01-aware relays (§15) and verifies `d`/`x` hashes before display (§18).
-Ecosystem docs, the tag registry, and the live explorer live at
-[github.com/NostrDanish/SIP-01](https://github.com/NostrDanish/SIP-01).
+**Spec conformance (v1.3):** `src/lib/webIndex.ts` implements the canonical
+SIP-01 v1.3 document contract — kind 39697 with wire schema `v=1`, byte-
+compatible URL normalization (spec §7), content hashing (§8), and the §13
+test vectors. The registered extension tags (§9.2 — `type`, `platform`,
+`category`, `network`, `country`, `mime`) remain supported; v1.3 adds
+optional `role`, repeatable `proto`, and an optional NIP-01 `a` pointer to a
+kind-39698 capability announcement. These are optional discovery hints and do
+not change the kind-39697 identity or wire schema. The Web Index provider uses
+NIP-50 acceleration with web operators (`site:`, `lang:`, …) on SIP-01-aware
+relays (§15) and verifies `d`/`x` hashes before display (§18). See the
+[canonical SIP-01 specification](https://github.com/SIP-01/SIP-01).
 
 The full wire format is specified in
 **[docs/SIP-01.md](docs/SIP-01.md)** (mirrored from the canonical

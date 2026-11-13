@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { finalizeEvent, generateSecretKey, getPublicKey, verifyEvent } from 'nostr-tools/pure';
+import { finalizeEvent, generateSecretKey, verifyEvent } from 'nostr-tools/pure';
 
 import {
   WEB_INDEX_KIND,
@@ -260,7 +260,7 @@ describe('buildIndexEvent', () => {
     const sk = generateSecretKey();
     const template = (await buildIndexEvent(input))!;
     const signed = finalizeEvent(
-      { ...template, created_at: Math.floor(Date.now() / 1000), pubkey: getPublicKey(sk) },
+      { ...template, created_at: Math.floor(Date.now() / 1000) },
       sk,
     );
     expect(verifyEvent(signed)).toBe(true);
@@ -282,8 +282,7 @@ describe('parseIndexEvent', () => {
         created_at: 1754650000,
         tags: overrides.tags ?? template.tags,
         content: overrides.content ?? template.content,
-        pubkey: getPublicKey(sk),
-      },
+        },
       sk,
     );
   }
@@ -297,6 +296,12 @@ describe('parseIndexEvent', () => {
     expect(obs!.topics).toEqual(['nostr']);
     expect(obs!.indexer).toBe(event.pubkey);
     expect(obs!.observedAt).toBe(1754650000);
+  });
+
+  it('rejects JSON null without throwing', async () => {
+    const event = await makeEvent({ content: 'null' });
+    expect(() => parseIndexEvent(event)).not.toThrow();
+    expect(parseIndexEvent(event)).toBeNull();
   });
 
   it('rejects wrong kind / version / malformed content', async () => {
@@ -346,7 +351,7 @@ describe('parseIndexEvent', () => {
       capabilityAddress: '39698:' + 'a'.repeat(64) + ':example-tool',
     }))!;
     const event = finalizeEvent(
-      { ...template, created_at: 1754650000, pubkey: getPublicKey(sk) },
+      { ...template, created_at: 1754650000 },
       sk,
     );
     const obs = parseIndexEvent(event);
@@ -372,7 +377,7 @@ describe('verifyObservation (spec §18 step 2)', () => {
       description: 'Desc',
     }))!;
     const event = finalizeEvent(
-      { ...template, created_at: 1754650000, pubkey: getPublicKey(sk) },
+      { ...template, created_at: 1754650000 },
       sk,
     );
     return parseIndexEvent(event)!;

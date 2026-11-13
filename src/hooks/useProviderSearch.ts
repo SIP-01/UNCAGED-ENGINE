@@ -164,11 +164,11 @@ export function useProviderSearch({
 
   // Apply team-signed moderation filtering to the merged results.
   // (Additive: until the moderation list loads, nothing is filtered.)
-  const baseResults = data?.results ?? [];
   const allResults = useMemo(() => {
+    const baseResults = data?.results ?? [];
     if (!moderationSet) return baseResults;
     return baseResults.filter((r) => !isHiddenResult(r, moderationSet));
-  }, [baseResults, moderationSet]);
+  }, [data?.results, moderationSet]);
   const suggestions = data?.suggestions ?? [];
 
   // Reset provider states when query clears.
@@ -209,14 +209,15 @@ export function useProviderSearch({
     return c as Record<SearchSource | 'all', number>;
   }, [allResults]);
 
-  // Invalidate stale queries when source changes.
+  // Invalidate stale queries when source changes, outside render.
   const prevSourceRef = useRef(source);
-  if (prevSourceRef.current !== source) {
+  useEffect(() => {
+    if (prevSourceRef.current === source) return;
     prevSourceRef.current = source;
     if (query.trim()) {
-      queryClient.invalidateQueries({ queryKey: ['provider-search', query, source] });
+      void queryClient.invalidateQueries({ queryKey: ['provider-search', query] });
     }
-  }
+  }, [source, query, queryClient]);
 
   return {
     results: allResults,
