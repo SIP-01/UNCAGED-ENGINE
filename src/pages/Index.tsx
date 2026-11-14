@@ -44,6 +44,7 @@ const Index = () => {
     isEmpty,
     suggestions,
     counts,
+    cancelSearch,
   } = useProviderSearch({
     query: activeQuery,
     source,
@@ -141,6 +142,7 @@ const Index = () => {
             value={query}
             onChange={setQuery}
             onSubmit={handleSubmit}
+            onCancel={cancelSearch}
             isLoading={isFetching}
           />
         </div>
