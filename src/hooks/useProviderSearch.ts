@@ -19,7 +19,7 @@ import { isHiddenResult } from '@/lib/moderation';
 import { useModerationSet } from '@/hooks/useModeration';
 import { useSearchIndexer } from '@/hooks/useSearchIndexer';
 
-export type ProviderStatus = 'idle' | 'searching' | 'done' | 'error';
+export type ProviderStatus = 'idle' | 'searching' | 'done' | 'error' | 'cancelled';
 
 export interface ProviderState {
   id: string;
@@ -51,6 +51,7 @@ export interface UseProviderSearchResult {
   suggestions: string[];
   /** Count of results per source category. */
   counts: Record<SearchSource | 'all', number>;
+  cancelSearch: () => void;
 }
 
 export function useProviderSearch({
@@ -78,12 +79,22 @@ export function useProviderSearch({
     });
   }, []);
 
+  const searchQueryKey = ['provider-search', query, source] as const;
+  const cancelSearch = useCallback(() => {
+    void queryClient.cancelQueries({ queryKey: searchQueryKey, exact: true });
+    setProviderStates((previous) => {
+      const next = new Map(previous);
+      for (const [id, state] of next) if (state.status === 'searching') next.set(id, { ...state, status: 'cancelled' });
+      return next;
+    });
+  }, [queryClient, query, source]);
+
   // Main query — runs all providers in parallel.
   const { data, isFetching } = useQuery<{
     results: SearchResult[];
     suggestions: string[];
   }>({
-    queryKey: ['provider-search', query, source],
+    queryKey: searchQueryKey,
     queryFn: async ({ signal }) => {
       if (!query.trim()) return { results: [], suggestions: [] };
 
@@ -123,6 +134,7 @@ export function useProviderSearch({
 
             return response;
           } catch {
+            if (signal.aborted) { updateProviderState(provider.id, { status: 'cancelled', resultCount: 0 }); return { results: [], suggestions: [] } as ProviderSearchResponse; }
             const latencyMs = Math.round(performance.now() - start);
             updateProviderState(provider.id, {
               status: 'error',
@@ -134,6 +146,7 @@ export function useProviderSearch({
         }),
       );
 
+      if (signal.aborted) throw new DOMException('Search cancelled', 'AbortError');
       for (const s of settled) {
         if (s.status === 'fulfilled') {
           results.push(...s.value.results);
@@ -227,6 +240,7 @@ export function useProviderSearch({
     isEmpty,
     suggestions,
     counts,
+    cancelSearch,
   };
 }
 
