@@ -45,6 +45,8 @@ const Index = () => {
     suggestions,
     counts,
     cancelSearch,
+    restartSearch,
+    isStopped,
   } = useProviderSearch({
     query: activeQuery,
     source,
@@ -69,13 +71,14 @@ const Index = () => {
   });
 
   const handleSubmit = useCallback((value: string) => {
+    restartSearch();
     setActiveQuery(value);
     setSearchParams((prev) => {
       prev.set('q', value);
       prev.set('source', source);
       return prev;
     });
-  }, [source, setSearchParams]);
+  }, [source, setSearchParams, restartSearch]);
 
   const handleSourceChange = useCallback((newSource: SourceTabValue) => {
     setSource(newSource);
@@ -150,6 +153,7 @@ const Index = () => {
         {/* Tabs + provider status */}
         <div className="flex flex-col gap-3 mb-6">
           <SourceTabs value={source} onChange={handleSourceChange} counts={hasSearched ? counts : undefined} />
+          {isStopped && <p role="status" className="text-sm text-muted-foreground">Search stopped.</p>}
           {providers.length > 0 && (
             <ProviderStatus providers={providers} hasResults={totalResults > 0} />
           )}
