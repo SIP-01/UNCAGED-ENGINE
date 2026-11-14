@@ -85,7 +85,7 @@ export function useProviderSearch({
   const searchQueryKey = ['provider-search', query, source] as const;
   const cancelSearch = useCallback(() => {
     setIsStopped(true);
-    void queryClient.cancelQueries({ queryKey: searchQueryKey, exact: true });
+    void queryClient.cancelQueries({ predicate: (query) => ['provider-search', 'ai-answer', 'instant-answer', 'precommunity-ad', 'precommunity-keyword'].includes(String(query.queryKey[0])) });
     setProviderStates((previous) => {
       const next = new Map(previous);
       for (const [id, state] of next) if (state.status === 'searching') next.set(id, { ...state, status: 'cancelled' });
