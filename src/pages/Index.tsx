@@ -81,6 +81,9 @@ const Index = () => {
   }, [source, setSearchParams, restartSearch]);
 
   const handleSourceChange = useCallback((newSource: SourceTabValue) => {
+    // Switching source starts a fresh search; reset cancellation at the event
+    // boundary instead of setting state synchronously from an effect.
+    restartSearch();
     setSource(newSource);
     if (activeQuery) {
       setSearchParams((prev) => {
@@ -88,7 +91,7 @@ const Index = () => {
         return prev;
       });
     }
-  }, [activeQuery, setSearchParams]);
+  }, [activeQuery, restartSearch, setSearchParams]);
 
   // ─── Hero mode (no search yet) ───
   if (!hasSearched) {
