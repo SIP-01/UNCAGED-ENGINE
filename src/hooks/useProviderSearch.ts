@@ -98,7 +98,6 @@ export function useProviderSearch({
     void queryClient.invalidateQueries({ predicate: (query) => ['provider-search', 'ai-answer', 'instant-answer', 'precommunity-ad', 'precommunity-keyword'].includes(String(query.queryKey[0])) });
   }, [queryClient, query, source]);
 
-  useEffect(() => { setIsStopped(false); }, [query, source]);
 
   // Main query — runs all providers in parallel.
   const { data, isFetching } = useQuery<{
