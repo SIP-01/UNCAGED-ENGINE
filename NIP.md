@@ -83,8 +83,19 @@ observed this web page at this time, and here is its public metadata."*
 | `network` | – | §9.2 extension — `clearnet`, `tor`, `i2p`, … (emitted for `.onion` submissions) |
 | `country` | – | §9.2 extension — ISO 3166-1 alpha-2, uppercase |
 | `mime` | – | §9.2 extension — document media type |
+| `role` | – | v1.3 optional provider-class hint for a service document: `agent`, `tool`, `model`, `api`, `compute`, `dataset`, `gateway` |
+| `proto` | – | v1.3 optional, repeatable transport hint: `mcp`, `http`, `contextvm`, `nostr`, `a2a` |
+| `a` | – | Optional NIP-01 address pointer to a separate kind-39698 ORBSTR capability listing |
 
 Extensions are optional and ignored by consumers that don't know them
+Kind-39697 v1.3 keeps wire schema `v="1"`; `role`, repeatable `proto` and
+the optional kind-39698 `a` pointer are additive hints. This engine parses
+supported optional extensions for its local observation model. Kind 39698 is
+a separate draft ORBSTR capability profile; this engine's observation reader
+does not turn an announcement into invocation permission or execute endpoints.
+See [ORBSTR](https://github.com/SIP-01/Orbstr) for provider discovery and its
+[approval-gated workflow](https://github.com/SIP-01/Orbstr/blob/main/docs/AGENT-WORKFLOWS.md).
+
 (spec §9.1) — the engine parses them into `observation.extensions` and the
 Web Index provider surfaces `type` as the result badge.
 
